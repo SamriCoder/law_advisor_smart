@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Advisor AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-content {
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.bot .message-content {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .sources {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        
+        .source-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 16px;
+        }
+        
+        .chat-input button {
+            padding: 15px 25px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .chat-input button:hover {
+            background: #0056b3;
+        }
+        
+        .chat-input button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .examples {
+            padding: 20px;
+            background: #e3f2fd;
+            margin: 10px;
+            border-radius: 10px;
+        }
+        
+        .example-btn {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 15px;
+            background: #2196f3;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            border: none;
+        }
+        
+        .example-btn:hover {
+            background: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>⚖️ Legal Advisor AI</h1>
+            <p>Ask me anything about Indian Criminal Law</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="examples">
+                <h3>💡 Try asking:</h3>
+                <button class="example-btn" onclick="sendExample('What is theft under BNS?')">What is theft under BNS?</button>
+                <button class="example-btn" onclick="sendExample('Can police arrest without warrant?')">Can police arrest without warrant?</button>
+                <button class="example-btn" onclick="sendExample('What is the punishment for fraud?')">What is the punishment for fraud?</button>
+                <button class="example-btn" onclick="sendExample('How to file an FIR?')">How to file an FIR?</button>
+                <button class="example-btn" onclick="sendExample('Rights during police custody')">Rights during police custody</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <p>🔍 Searching legal database...</p>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Ask your legal question..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()" id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const sessionId = 'session_' + Date.now();
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function sendExample(text) {
+            document.getElementById('messageInput').value = text;
+            sendMessage();
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('sendBtn').disabled = true;
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    addMessage('❌ ' + data.error, 'bot');
+                } else {
+                    addMessage(data.response, 'bot', data.sources);
+                }
+                
+            } catch (error) {
+                addMessage('❌ Sorry, something went wrong. Please try again.', 'bot');
+            }
+            
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('sendBtn').disabled = false;
+        }
+        
+        function addMessage(content, sender, sources = null) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            let sourcesHtml = '';
+            if (sources && sources.length > 0) {
+                sourcesHtml = '<div class="sources"><strong>📚 Legal References:</strong>';
+                sources.forEach((source, index) => {
+                    sourcesHtml += `
+                        <div class="source-item">
+                            <strong>📄 ${source.source} (Page ${source.page})</strong><br>
+                            <small>${source.content}</small>
+                        </div>
+                    `;
+                });
+                sourcesHtml += '</div>';
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${content.replace(/\n/g, '<br>')}
+                    ${sourcesHtml}
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Load chat history on page load
+        window.onload = function() {
+            // You can implement history loading here if needed
+        };
+    </script>
+</body>
+</html>
