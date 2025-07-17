@@ -9,6 +9,6 @@ langchain-community==0.0.10
 langchain-huggingface==0.0.1
 langchain-pinecone==0.0.1
 langchain-google-genai==0.0.5
-sentence-transformers==2.2.2
+sentence-transformers>=2.6.0
 pypdf==3.17.4
 
