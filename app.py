@@ -19,9 +19,12 @@ def chat():
     try:
         data = request.get_json()
         user_query = data.get('message', '').strip()
+        
         if not user_query:
             return jsonify({'error': 'Message is required'}), 400
+        
         rag = get_rag_system()
+        
         if not rag.is_legal_query(user_query):
             response = {
                 'response': "🚫 Please ask a proper legal question about Indian criminal law.\n💡 Try asking about crimes, procedures, or your legal rights.",
@@ -41,7 +44,9 @@ def chat():
                 ],
                 'type': 'success'
             }
+        
         return jsonify(response)
+        
     except Exception as e:
         return jsonify({'error': f'Error processing request: {str(e)}'}), 500
 @app.errorhandler(Exception)
@@ -52,4 +57,5 @@ def handle_error(e):
         'type': 'error'
     }), 500
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
