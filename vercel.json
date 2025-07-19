@@ -1,12 +1,12 @@
 {
   "version": 2,
-<<<<<<< HEAD
+
   "functions": {
     "api/index.py": {
       "runtime": "python3.9"
     }
   }
-=======
+
   "builds": [
     {
       "src": "api/index.py",
@@ -19,5 +19,5 @@
       "dest": "api/index.py"
     }
   ]
->>>>>>> 765180f2a178e003dc5fa330fb44aaf031a7fca4
+
 }
